@@ -1,0 +1,146 @@
+import 'package:flutter/material.dart';
+import 'package:xyz/core/theme/app_colors.dart';
+import 'package:xyz/features/community/tabs/posts/data/post_models.dart';
+
+class PostCard extends StatelessWidget {
+  const PostCard({
+    super.key,
+    required this.post,
+    required this.onLike,
+    this.onComments,
+  });
+
+  final PostModel post;
+  final VoidCallback onLike;
+  final VoidCallback? onComments;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+            color: AppColors.black.withOpacity(.06),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 22,
+                  backgroundImage: (post.author.avatarUrl != null)
+                      ? NetworkImage(post.author.avatarUrl!)
+                      : null,
+                  child: (post.author.avatarUrl == null)
+                      ? const Icon(Icons.person)
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  post.author.name,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  _timeShort(post.createdAt),
+                  style: TextStyle(color: AppColors.black.withOpacity(.55)),
+                ),
+              ],
+            ),
+          ),
+
+          if (post.content != null && post.content!.trim().isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(post.content!),
+            ),
+
+          if (post.imageUrl != null) ...[
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: AspectRatio(
+                  aspectRatio: 4 / 3,
+                  child: Image.network(
+                    post.imageUrl!,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const ColoredBox(
+                      color: Color(0xFFF6F4EF),
+                      child: Center(child: Icon(Icons.broken_image)),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+
+          const SizedBox(height: 6),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(6, 4, 6, 8),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: Icon(
+                    post.youLiked ? Icons.favorite : Icons.favorite_border,
+                    color: post.youLiked
+                        ? Colors.red
+                        : AppColors.black.withOpacity(.6),
+                  ),
+                  onPressed: onLike,
+                ),
+                Text(
+                  '${post.likesCount}',
+                  style: TextStyle(
+                    color: AppColors.black.withOpacity(.6),
+                    fontSize: 16,
+                  ),
+                ),
+
+                if (onComments != null) ...[
+                  const SizedBox(width: 18),
+                  IconButton(
+                    icon: Icon(
+                      Icons.mode_comment_outlined,
+                      color: AppColors.black.withOpacity(.6),
+                    ),
+                    onPressed: onComments,
+                  ),
+                  Text(
+                    '${post.commentsCount}',
+                    style: TextStyle(
+                      color: AppColors.black.withOpacity(.6),
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _timeShort(DateTime dt) {
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.inMinutes < 1) return 'now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
+    if (diff.inHours < 24) return '${diff.inHours}h';
+    return '${diff.inDays}d';
+  }
+}
