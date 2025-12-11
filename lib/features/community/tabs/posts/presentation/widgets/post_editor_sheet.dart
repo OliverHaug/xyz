@@ -10,61 +10,50 @@ import 'package:xyz/features/community/tabs/posts/logic/post/post_bloc.dart';
 import 'package:xyz/features/community/tabs/posts/logic/post_edit/post_editor_cubit.dart';
 import 'package:xyz/features/community/tabs/posts/logic/post_edit/post_editor_state.dart';
 
-enum PostEditorMode { create, edit }
-
 class PostEditorBottomSheet extends StatelessWidget {
   final PostModel? initialPost;
 
-  PostEditorBottomSheet({super.key, this.initialPost})
-    : _textController = TextEditingController(
-        text: initialPost?.content ?? Get.find<PostEditorCubit>().state.text,
-      );
-
-  final TextEditingController _textController;
+  const PostEditorBottomSheet({super.key, this.initialPost});
 
   @override
   Widget build(BuildContext context) {
-    final imagePicker = ImagePicker();
+    final picker = ImagePicker();
+    final cubit = context.read<PostEditorCubit>();
+
+    Future<void> pickImage() async {
+      final img = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1600,
+        imageQuality: 85,
+      );
+      if (img != null) cubit.imagePicked(img);
+    }
+
+    Future<void> submit() async {
+      try {
+        await cubit.submit();
+        if (context.mounted) Navigator.of(context).pop();
+      } catch (_) {}
+    }
 
     return BlocBuilder<PostEditorCubit, PostEditorState>(
       builder: (context, state) {
         final bottom = MediaQuery.of(context).viewInsets.bottom;
-        final isEdit = state.isEdit;
 
-        Future<void> pickImage() async {
-          final img = await imagePicker.pickImage(
-            source: ImageSource.gallery,
-            maxWidth: 1600,
-            imageQuality: 85,
-          );
-          if (img == null) return;
-          context.read<PostEditorCubit>().imagePicked(img); // 👈 direkt XFile
-        }
-
-        Future<void> submit() async {
-          context.read<PostEditorCubit>().textChanged(_textController.text);
-          try {
-            await context.read<PostEditorCubit>().submit();
-            if (context.mounted) Navigator.of(context).pop();
-          } catch (_) {
-            // optional: Fehler anzeigen
-          }
-        }
-
-        // Bild-Preview
-        Widget? imageWidget;
+        // Bild-Vorschau
+        Widget? imagePreview;
         if (state.imageFile != null) {
-          imageWidget = ClipRRect(
+          imagePreview = ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Image.file(
-              File(state.imageFile!.path), // 👈 XFile.path
+              File(state.imageFile!.path),
               height: 180,
               width: double.infinity,
               fit: BoxFit.cover,
             ),
           );
         } else if (state.existingImageUrl != null) {
-          imageWidget = ClipRRect(
+          imagePreview = ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Image.network(
               state.existingImageUrl!,
@@ -84,29 +73,31 @@ class PostEditorBottomSheet extends StatelessWidget {
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   Text(
-                    isEdit ? 'Edit post' : 'Create post',
+                    state.isEdit ? "Edit Post" : "Create Post",
                     style: const TextStyle(
-                      fontWeight: FontWeight.bold,
                       fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                   const Spacer(),
                   IconButton(
-                    icon: const Icon(Icons.close),
                     onPressed: state.isSubmitting
                         ? null
                         : () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+
+              const SizedBox(height: 12),
+
+              // 💡 Controller kommt aus dem BLoC → kein Reset bei rebuilds!
               TextField(
-                controller: _textController,
+                controller: state.controller,
                 autofocus: true,
                 minLines: 3,
                 maxLines: 6,
@@ -114,12 +105,12 @@ class PostEditorBottomSheet extends StatelessWidget {
                   hintText: "What's on your mind?",
                   border: OutlineInputBorder(),
                 ),
-                onChanged: (v) => Get.find<PostEditorCubit>().textChanged(v),
               ),
+
               const SizedBox(height: 12),
 
-              if (imageWidget != null) ...[
-                imageWidget,
+              if (imagePreview != null) ...[
+                imagePreview,
                 const SizedBox(height: 8),
               ],
 
@@ -131,8 +122,8 @@ class PostEditorBottomSheet extends StatelessWidget {
                     label: Text(
                       (state.imageFile != null ||
                               state.existingImageUrl != null)
-                          ? 'Bild ändern'
-                          : 'Bild hinzufügen',
+                          ? "Bild ändern"
+                          : "Bild hinzufügen",
                     ),
                   ),
                   const Spacer(),
@@ -144,11 +135,11 @@ class PostEditorBottomSheet extends StatelessWidget {
                             height: 16,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Icon(Icons.send, size: 18),
+                        : const Icon(Icons.send),
                     label: Text(
                       state.isSubmitting
-                          ? (isEdit ? 'Saving...' : 'Posting...')
-                          : (isEdit ? 'Save' : 'Post'),
+                          ? (state.isEdit ? "Saving..." : "Posting...")
+                          : (state.isEdit ? "Save" : "Post"),
                     ),
                   ),
                 ],
@@ -165,15 +156,15 @@ Future<void> showPostEditorSheet(
   BuildContext context, {
   PostModel? post,
   required PostBloc bloc,
-}) {
+}) async {
   final repo = Get.find<PostRepository>();
 
   return showModalBottomSheet(
-    context: context,
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
+    context: context,
     builder: (_) {
       return BlocProvider(
         create: (_) =>

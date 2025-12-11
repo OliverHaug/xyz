@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:xyz/features/community/tabs/posts/data/post_models.dart';
@@ -21,10 +22,13 @@ class PostEditorCubit extends Cubit<PostEditorState> {
        super(
          PostEditorState(
            text: initialPost?.content ?? '',
+           controller: TextEditingController(text: initialPost?.content ?? ""),
            existingImageUrl: initialPost?.imageUrl,
            isEdit: initialPost != null,
          ),
-       );
+       ) {
+    state.controller.addListener(() => textChanged(state.controller.text));
+  }
 
   void textChanged(String value) {
     emit(state.copyWith(text: value));

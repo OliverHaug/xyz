@@ -1,8 +1,10 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/widgets.dart';
 import 'package:image_picker/image_picker.dart';
 
 class PostEditorState extends Equatable {
   final String text;
+  final TextEditingController controller;
   final XFile? imageFile;
   final String? existingImageUrl;
   final bool isSubmitting;
@@ -10,6 +12,7 @@ class PostEditorState extends Equatable {
 
   const PostEditorState({
     this.text = '',
+    required this.controller,
     this.imageFile,
     this.existingImageUrl,
     this.isSubmitting = false,
@@ -18,6 +21,7 @@ class PostEditorState extends Equatable {
 
   PostEditorState copyWith({
     String? text,
+    TextEditingController? controller,
     XFile? imageFile,
     String? existingImageUrl,
     bool? isSubmitting,
@@ -25,6 +29,7 @@ class PostEditorState extends Equatable {
   }) {
     return PostEditorState(
       text: text ?? this.text,
+      controller: controller ?? this.controller,
       imageFile: imageFile ?? this.imageFile,
       existingImageUrl: existingImageUrl ?? this.existingImageUrl,
       isSubmitting: isSubmitting ?? this.isSubmitting,
