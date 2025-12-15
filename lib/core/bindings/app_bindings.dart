@@ -6,6 +6,8 @@ import 'package:xyz/features/auth/data/auth_repository.dart';
 import 'package:xyz/features/auth/logic/login/login_bloc.dart';
 import 'package:xyz/features/auth/logic/register/register_bloc.dart';
 import 'package:xyz/features/community/logic/community_bloc.dart';
+import 'package:xyz/features/community/tabs/following/data/circle_repository.dart';
+import 'package:xyz/features/community/tabs/following/logic/circle_bloc.dart';
 import 'package:xyz/features/community/tabs/posts/data/post_repository.dart';
 import 'package:xyz/features/community/tabs/posts/logic/post/post_bloc.dart';
 import 'package:xyz/features/main/logic/main_bloc.dart';
@@ -27,9 +29,12 @@ class AppBindings extends Bindings {
 
     //community
     Get.put<PostRepository>(PostRepository(client), permanent: true);
+    Get.put<CircleRepository>(CircleRepository(client), permanent: true);
+
     Get.lazyPut(() => CommunityBloc());
     Get.lazyPut(() => MainBloc());
     Get.lazyPut(() => PostBloc(Get.find<PostRepository>()), fenix: true);
+    Get.lazyPut(() => CircleBloc(Get.find<CircleRepository>()), fenix: true);
 
     //profile
     Get.lazyPut(() => ProfileBloc(Get.find<AuthRepository>()), fenix: true);

@@ -27,7 +27,6 @@ class PostModel extends Equatable {
 
   factory PostModel.fromMap(Map<String, dynamic> map, {String? currentUserId}) {
     final likes = (map['post_likes'] as List? ?? []);
-    final comments = (map['comments'] as List? ?? []);
 
     return PostModel(
       id: map['id'] as String,

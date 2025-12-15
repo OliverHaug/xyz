@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
@@ -11,9 +10,6 @@ import 'package:xyz/features/community/tabs/posts/logic/post/post_bloc.dart';
 import 'package:xyz/features/community/tabs/posts/logic/post_edit/post_editor_cubit.dart';
 import 'package:xyz/features/community/tabs/posts/logic/post_edit/post_editor_state.dart';
 
-/// ------------------------------------------------------------
-///  Bottom-Sheet Widget
-/// ------------------------------------------------------------
 class PostEditorBottomSheet extends StatelessWidget {
   final TextEditingController textController;
 
@@ -38,7 +34,6 @@ class PostEditorBottomSheet extends StatelessWidget {
         }
 
         Future<void> submit() async {
-          // aktuellen Text in den Cubit schieben
           context.read<PostEditorCubit>().textChanged(
             textController.text.trim(),
           );
@@ -46,12 +41,9 @@ class PostEditorBottomSheet extends StatelessWidget {
           try {
             await context.read<PostEditorCubit>().submit();
             if (context.mounted) Navigator.of(context).pop();
-          } catch (e) {
-            // optional: Snackbar / Fehler anzeigen
-          }
+          } catch (e) {}
         }
 
-        // Bild-Preview
         Widget? imageWidget;
         if (state.imageFile != null) {
           imageWidget = ClipRRect(
@@ -78,7 +70,6 @@ class PostEditorBottomSheet extends StatelessWidget {
         return SafeArea(
           top: false,
           child: Padding(
-            // Keyboard-Offset: auf Web ist der meist 0, macht aber nix
             padding: EdgeInsets.only(
               left: 16,
               right: 16,
@@ -86,12 +77,10 @@ class PostEditorBottomSheet extends StatelessWidget {
               bottom: MediaQuery.of(context).viewInsets.bottom + 16,
             ),
             child: SingleChildScrollView(
-              // wichtig für kleine Displays + Keyboard
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header
                   Row(
                     children: [
                       Text(
@@ -111,8 +100,6 @@ class PostEditorBottomSheet extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
-
-                  // Textfeld
                   TextField(
                     controller: textController,
                     autofocus: true,
@@ -122,7 +109,6 @@ class PostEditorBottomSheet extends StatelessWidget {
                       hintText: "What's on your mind?",
                       border: OutlineInputBorder(),
                     ),
-                    // BLoC immer aktuell halten
                     onChanged: (v) => context
                         .read<PostEditorCubit>()
                         .textChanged(v.trimRight()),
@@ -177,18 +163,12 @@ class PostEditorBottomSheet extends StatelessWidget {
   }
 }
 
-/// ------------------------------------------------------------
-///  Helper zum Öffnen des Sheets
-/// ------------------------------------------------------------
 Future<void> showPostEditorSheet(
   BuildContext context, {
   PostModel? post,
   required PostBloc bloc,
 }) {
   final repo = Get.find<PostRepository>();
-
-  // EIN Controller pro Sheet-Instanz -> geht nicht verloren,
-  // auch wenn BlocBuilder neu buildet.
   final textController = TextEditingController(text: post?.content ?? '');
 
   return showModalBottomSheet(
@@ -201,7 +181,6 @@ Future<void> showPostEditorSheet(
             PostEditorCubit(repo: repo, postBloc: bloc, initialPost: post)
               ..textChanged(textController.text.trim()),
         child: Material(
-          // eigener Material-Layer, damit der Hintergrund (Body) sichtbar bleibt
           color: Theme.of(sheetContext).canvasColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
           child: PostEditorBottomSheet(textController: textController),

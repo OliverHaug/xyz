@@ -6,6 +6,7 @@ class UserModel extends Equatable {
   final String? avatarUrl;
   final String? bio;
   final String role;
+  final String? headline;
   final DateTime? createdAt;
 
   const UserModel({
@@ -14,6 +15,7 @@ class UserModel extends Equatable {
     this.avatarUrl,
     this.bio,
     required this.role,
+    this.headline,
     this.createdAt,
   });
 
@@ -24,6 +26,7 @@ class UserModel extends Equatable {
       avatarUrl: map['avatar_url'] as String?,
       bio: map['bio'] as String?,
       role: map['role'] as String,
+      headline: map['headline'] as String?,
       createdAt: map['created_at'] != null
           ? DateTime.parse(map['created_at'])
           : null,
@@ -31,5 +34,13 @@ class UserModel extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, name, avatarUrl, bio, role, createdAt];
+  List<Object?> get props => [
+    id,
+    name,
+    avatarUrl,
+    bio,
+    role,
+    headline,
+    createdAt,
+  ];
 }
