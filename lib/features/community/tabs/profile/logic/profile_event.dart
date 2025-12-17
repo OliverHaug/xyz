@@ -15,7 +15,8 @@ class ProfileStarted extends ProfileEvent {
 }
 
 class ProfileRefreshed extends ProfileEvent {
-  const ProfileRefreshed();
+  final String? userId;
+  const ProfileRefreshed({this.userId});
 }
 
 class ProfileUserChanged extends ProfileEvent {

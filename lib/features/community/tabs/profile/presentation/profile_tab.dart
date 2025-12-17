@@ -25,7 +25,11 @@ class ProfileTab extends StatelessWidget {
 
     // Wenn userId wechselt: neu laden
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      bloc.add(ProfileUserChanged(userId: userIdToShow));
+      print(bloc.state.viewingUserId);
+      print(userIdToShow);
+      if (bloc.state.viewingUserId != userIdToShow) {
+        bloc.add(ProfileUserChanged(userId: userIdToShow));
+      }
     });
 
     return BlocProvider.value(
@@ -51,8 +55,9 @@ class ProfileTab extends StatelessWidget {
               if (user == null) return const SizedBox();
 
               return RefreshIndicator(
-                onRefresh: () async =>
-                    context.read<ProfileBloc>().add(const ProfileRefreshed()),
+                onRefresh: () async => context.read<ProfileBloc>().add(
+                  ProfileRefreshed(userId: user.id),
+                ),
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
                   children: [

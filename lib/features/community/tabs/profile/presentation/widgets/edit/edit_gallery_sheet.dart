@@ -58,7 +58,10 @@ Future<void> showEditGallerySheet(BuildContext context) {
 
                   final repo = Get.find<ProfileRepository>();
                   final signedUrl = await repo.uploadGalleryImage(file);
-                  await repo.addGalleryPhoto(imageUrl: signedUrl);
+                  await repo.addGalleryPhoto(
+                    imagePath: signedUrl['path']!,
+                    imageUrl: signedUrl['url']!,
+                  );
 
                   Get.find<ProfileBloc>().add(const ProfileRefreshed());
                 },

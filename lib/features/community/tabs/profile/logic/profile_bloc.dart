@@ -29,7 +29,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     ProfileRefreshed e,
     Emitter<ProfileState> emit,
   ) async {
-    await _load(userId: state.viewingUserId, emit: emit, force: true);
+    await _load(userId: e.userId, emit: emit, force: true);
   }
 
   Future<void> _load({

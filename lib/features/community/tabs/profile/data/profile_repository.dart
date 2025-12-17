@@ -15,7 +15,7 @@ class ProfileRepository {
   Future<UserModel> fetchUser(String userId) async {
     final res = await _client
         .from('profiles')
-        .select('id, name, avatar_url, bio, role, created_at')
+        .select('id, name, avatar_url, avatar_path, bio, role, created_at')
         .eq('id', userId)
         .single();
 
@@ -49,7 +49,10 @@ class ProfileRepository {
     return list.map((e) => e['image_url'] as String).toList();
   }
 
-  Future<void> addGalleryPhoto({required String imageUrl}) async {
+  Future<void> addGalleryPhoto({
+    required String imageUrl,
+    required String imagePath,
+  }) async {
     if (currentUserId == null) throw Exception('Not authenticated');
 
     final maxRes = await _client
@@ -67,12 +70,24 @@ class ProfileRepository {
     await _client.from('profile_photos').insert({
       'user_id': currentUserId,
       'image_url': imageUrl,
+      'image_path': imagePath,
       'order_index': next,
     });
   }
 
   Future<void> deleteGalleryPhoto({required String imageUrl}) async {
     if (currentUserId == null) throw Exception('Not authenticated');
+
+    final row = await _client
+        .from('profile_photos')
+        .select('image_path')
+        .eq('user_id', currentUserId!)
+        .eq('image_url', imageUrl)
+        .maybeSingle();
+
+    final path = row?['image_path'] as String?;
+
+    await _deleteStorageObjectIfExists(bucket: 'profile-gallery', path: path);
 
     await _client
         .from('profile_photos')
@@ -144,6 +159,17 @@ class ProfileRepository {
   // ---------- Storage Uploads ----------
   Future<String> uploadAvatar(XFile file) async {
     if (currentUserId == null) throw Exception('Not authenticated');
+    final old = await _client
+        .from('profiles')
+        .select('avatar_path')
+        .eq('id', currentUserId!)
+        .single();
+
+    print("TEST");
+    final oldPath = old['avatar_path'] as String?;
+    print(oldPath);
+
+    await _deleteStorageObjectIfExists(bucket: 'avatars', path: oldPath);
 
     final bytes = await file.readAsBytes();
     final path = '$currentUserId/${DateTime.now().millisecondsSinceEpoch}.jpg';
@@ -159,14 +185,17 @@ class ProfileRepository {
           ),
         );
 
-    // robust: signed URL
-    final signed = await _client.storage
-        .from('avatars')
-        .createSignedUrl(path, 60 * 60 * 24 * 30);
-    return signed;
+    final publicUrl = _client.storage.from('avatars').getPublicUrl(path);
+
+    await _client
+        .from('profiles')
+        .update({'avatar_url': publicUrl, 'avatar_path': path})
+        .eq('id', currentUserId!);
+
+    return publicUrl;
   }
 
-  Future<String> uploadGalleryImage(XFile file) async {
+  Future<Map<String, String>> uploadGalleryImage(XFile file) async {
     if (currentUserId == null) throw Exception('Not authenticated');
 
     final bytes = await file.readAsBytes();
@@ -178,14 +207,34 @@ class ProfileRepository {
           path,
           bytes,
           fileOptions: const FileOptions(
-            upsert: true,
+            upsert: false,
             contentType: 'image/jpeg',
           ),
         );
 
-    final signed = await _client.storage
+    final publicUrl = _client.storage
         .from('profile-gallery')
-        .createSignedUrl(path, 60 * 60 * 24 * 30);
-    return signed;
+        .getPublicUrl(path);
+    return {'url': publicUrl, 'path': path};
+  }
+
+  // ---------- Helper Functions ----------
+  Future<void> _deleteStorageObjectIfExists({
+    required String bucket,
+    required String? path,
+  }) async {
+    if (path == null || path.trim().isEmpty) return;
+    print("JOOOOOOOOOOOOOOOOOOOOOOOLO");
+    try {
+      await _client.storage.from(bucket).remove([path]);
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  String _newJpgPath() {
+    final uid = currentUserId;
+    if (uid == null) throw Exception('Not authenticated');
+    return '$uid/${DateTime.now().millisecondsSinceEpoch}.jpg';
   }
 }

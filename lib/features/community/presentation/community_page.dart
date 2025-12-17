@@ -7,6 +7,8 @@ import 'package:xyz/features/community/logic/community_event.dart';
 import 'package:xyz/features/community/logic/community_state.dart';
 import 'package:xyz/features/community/tabs/following/presentation/following_tab.dart';
 import 'package:xyz/features/community/tabs/posts/presentation/post_tab.dart';
+import 'package:xyz/features/community/tabs/profile/logic/profile_bloc.dart';
+import 'package:xyz/features/community/tabs/profile/logic/profile_event.dart';
 import 'package:xyz/features/community/tabs/profile/presentation/profile_tab.dart';
 
 class CommunityPage extends StatelessWidget {
@@ -45,8 +47,15 @@ class CommunityPage extends StatelessWidget {
                             return Expanded(
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(12),
-                                onTap: () =>
-                                    communityBloc.add(CommunityTabChanged(i)),
+                                onTap: () {
+                                  communityBloc.add(CommunityTabChanged(i));
+
+                                  if (i == 2) {
+                                    Get.find<ProfileBloc>().add(
+                                      const ProfileUserChanged(userId: null),
+                                    );
+                                  }
+                                },
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 14,

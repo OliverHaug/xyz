@@ -32,7 +32,11 @@ class PostBloc extends Bloc<PostEvent, PostState> {
 
   Future<void> _onPostCreated(PostCreated e, Emitter<PostState> emit) async {
     try {
-      await _repo.createPost(content: e.content, imageUrl: e.imageUrl);
+      await _repo.createPost(
+        content: e.content,
+        imageUrl: e.imageUrl,
+        imagePath: e.imagePath,
+      );
       add(PostRequested(forceRefresh: true));
     } catch (err) {
       emit(state.copyWith(error: err.toString()));
@@ -48,6 +52,8 @@ class PostBloc extends Bloc<PostEvent, PostState> {
         postId: e.postId,
         content: e.content,
         imageUrl: e.imageUrl,
+        imagePath: e.imagePath,
+        removeImage: e.removeImage,
       );
       add(PostRequested(forceRefresh: true));
     } catch (err) {

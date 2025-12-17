@@ -8,6 +8,7 @@ class PostModel extends Equatable {
   final String? content;
   final DateTime createdAt;
   final String? imageUrl;
+  final String? imagePath;
   final int likesCount;
   final int commentsCount;
   final bool youLiked;
@@ -19,6 +20,7 @@ class PostModel extends Equatable {
     this.content,
     required this.createdAt,
     this.imageUrl,
+    this.imagePath,
     this.likesCount = 0,
     this.commentsCount = 0,
     this.youLiked = false,
@@ -33,6 +35,7 @@ class PostModel extends Equatable {
       author: UserModel.fromMap(map['author'] ?? map['profiles'] ?? {}),
       content: map['content'] as String?,
       imageUrl: map['image_url'] as String?,
+      imagePath: map['image_path'] as String?,
       createdAt: DateTime.parse(map['created_at'] as String),
       likesCount: likes.length,
       commentsCount: map['comments_count'],
@@ -43,15 +46,28 @@ class PostModel extends Equatable {
   }
 
   Map<String, dynamic> toMap() {
-    return {'author_id': author.id, 'content': content, 'image_url': imageUrl};
+    return {
+      'author_id': author.id,
+      'content': content,
+      'image_url': imageUrl,
+      'image_path': imagePath,
+    };
   }
 
-  PostModel copyWith({int? likesCount, bool? youLiked, int? commentsCount}) {
+  PostModel copyWith({
+    int? likesCount,
+    bool? youLiked,
+    int? commentsCount,
+    String? imageUrl,
+    String? imagePath,
+    String? content,
+  }) {
     return PostModel(
       id: id,
       author: author,
-      content: content,
-      imageUrl: imageUrl,
+      content: content ?? this.content,
+      imageUrl: imageUrl ?? this.imageUrl,
+      imagePath: imagePath ?? this.imagePath,
       createdAt: createdAt,
       likesCount: likesCount ?? this.likesCount,
       commentsCount: commentsCount ?? this.commentsCount,
@@ -67,6 +83,7 @@ class PostModel extends Equatable {
     content,
     createdAt,
     imageUrl,
+    imagePath,
     commentsCount,
     youLiked,
     comments,

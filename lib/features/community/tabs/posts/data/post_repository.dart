@@ -7,7 +7,7 @@ class PostRepository {
   final SupabaseClient _client;
   PostRepository(this._client);
 
-  Future<String> uploadPostImage(XFile file) async {
+  Future<Map<String, String>> uploadPostImage(XFile file) async {
     final uid = _client.auth.currentUser!.id;
 
     final bytes = await file.readAsBytes();
@@ -20,11 +20,11 @@ class PostRepository {
         .uploadBinary(
           path,
           bytes,
-          fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
+          fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
         );
 
     final publicUrl = _client.storage.from('post-images').getPublicUrl(path);
-    return publicUrl;
+    return {'url': publicUrl, 'path': path};
   }
 
   Future<List<PostModel>> fetchFeed({int limit = 20}) async {
@@ -33,7 +33,7 @@ class PostRepository {
     final data = await _client
         .from('posts')
         .select('''
-          id, content, image_url, created_at,
+          id, content, image_url, image_path, created_at,
           likes_count, comments_count,
           author:author_id (id, name, avatar_url, role),
           post_likes (user_id)
@@ -56,7 +56,7 @@ class PostRepository {
     final res = await _client
         .from('posts')
         .select('''
-          id, content, image_url, created_at,
+          id, content, image_url, image_path, created_at,
           likes_count, comments_count,
           author:author_id (id, name, role, avatar_url),
           post_likes (user_id)
@@ -149,12 +149,21 @@ class PostRepository {
     });
   }
 
-  Future<String> createPost({required String content, String? imageUrl}) async {
+  Future<String> createPost({
+    required String content,
+    String? imageUrl,
+    String? imagePath,
+  }) async {
     final uid = _client.auth.currentUser!.id;
 
     final inserted = await _client
         .from('posts')
-        .insert({'author_id': uid, 'content': content, 'image_url': imageUrl})
+        .insert({
+          'author_id': uid,
+          'content': content,
+          'image_url': imageUrl,
+          'image_path': imagePath,
+        })
         .select('id')
         .single();
 
@@ -165,16 +174,51 @@ class PostRepository {
     required String postId,
     required String content,
     String? imageUrl,
+    String? imagePath,
+    bool removeImage = false,
   }) async {
+    // alten pfad holen
+    final old = await _client
+        .from('posts')
+        .select('image_path')
+        .eq('id', postId)
+        .single();
+
+    final oldPath = old['image_path'] as String?;
+
+    // wenn remove oder ersetzen -> alten löschen
+    final shouldDeleteOld = removeImage || (imagePath != null);
+    if (shouldDeleteOld) {
+      if (oldPath != null && oldPath.isNotEmpty) {
+        await _client.storage.from('post-images').remove([oldPath]);
+      }
+    }
+
     final update = <String, dynamic>{'content': content};
-    if (imageUrl != null) {
-      update['image_url'] = imageUrl;
+
+    if (removeImage) {
+      update['image_url'] = null;
+      update['image_path'] = null;
+    } else {
+      if (imageUrl != null) update['image_url'] = imageUrl;
+      if (imagePath != null) update['image_path'] = imagePath;
     }
 
     await _client.from('posts').update(update).eq('id', postId);
   }
 
   Future<void> deletePost(String postId) async {
+    final row = await _client
+        .from('posts')
+        .select('image_path')
+        .eq('id', postId)
+        .maybeSingle();
+
+    final path = row?['image_path'] as String?;
+    if (path != null && path.isNotEmpty) {
+      await _client.storage.from('post-images').remove([path]);
+    }
+
     await _client.from('posts').delete().eq('id', postId);
   }
 

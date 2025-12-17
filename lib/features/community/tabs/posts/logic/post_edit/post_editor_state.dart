@@ -7,6 +7,8 @@ class PostEditorState extends Equatable {
   final TextEditingController controller;
   final XFile? imageFile;
   final String? existingImageUrl;
+  final String? existingImagePath;
+  final bool removeImage;
   final bool isSubmitting;
   final bool isEdit;
 
@@ -15,6 +17,8 @@ class PostEditorState extends Equatable {
     required this.controller,
     this.imageFile,
     this.existingImageUrl,
+    this.existingImagePath,
+    this.removeImage = false,
     this.isSubmitting = false,
     this.isEdit = false,
   });
@@ -24,6 +28,8 @@ class PostEditorState extends Equatable {
     TextEditingController? controller,
     XFile? imageFile,
     String? existingImageUrl,
+    String? existingImagePath,
+    bool? removeImage,
     bool? isSubmitting,
     bool? isEdit,
   }) {
@@ -32,6 +38,8 @@ class PostEditorState extends Equatable {
       controller: controller ?? this.controller,
       imageFile: imageFile ?? this.imageFile,
       existingImageUrl: existingImageUrl ?? this.existingImageUrl,
+      existingImagePath: existingImagePath ?? this.existingImagePath,
+      removeImage: removeImage ?? this.removeImage,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       isEdit: isEdit ?? this.isEdit,
     );
@@ -42,6 +50,8 @@ class PostEditorState extends Equatable {
     text,
     imageFile,
     existingImageUrl,
+    existingImagePath,
+    removeImage,
     isSubmitting,
     isEdit,
   ];

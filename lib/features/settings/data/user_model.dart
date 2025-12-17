@@ -4,6 +4,7 @@ class UserModel extends Equatable {
   final String id;
   final String name;
   final String? avatarUrl;
+  final String? avatarPath;
   final String? bio;
   final String role;
   final String? headline;
@@ -13,6 +14,7 @@ class UserModel extends Equatable {
     required this.id,
     required this.name,
     this.avatarUrl,
+    this.avatarPath,
     this.bio,
     required this.role,
     this.headline,
@@ -24,6 +26,7 @@ class UserModel extends Equatable {
       id: map['id'] as String,
       name: map['name'] ?? 'Unknown',
       avatarUrl: map['avatar_url'] as String?,
+      avatarPath: map['avatar_path'] as String?,
       bio: map['bio'] as String?,
       role: map['role'] as String,
       headline: map['headline'] as String?,
@@ -38,6 +41,7 @@ class UserModel extends Equatable {
     id,
     name,
     avatarUrl,
+    avatarPath,
     bio,
     role,
     headline,

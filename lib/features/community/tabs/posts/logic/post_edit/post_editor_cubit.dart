@@ -24,6 +24,7 @@ class PostEditorCubit extends Cubit<PostEditorState> {
            text: initialPost?.content ?? '',
            controller: TextEditingController(text: initialPost?.content ?? ""),
            existingImageUrl: initialPost?.imageUrl,
+           existingImagePath: initialPost?.imagePath,
            isEdit: initialPost != null,
          ),
        ) {
@@ -46,9 +47,12 @@ class PostEditorCubit extends Cubit<PostEditorState> {
 
     try {
       String? imageUrl = state.existingImageUrl;
+      String? imagePath = state.existingImagePath;
 
       if (state.imageFile != null) {
-        imageUrl = await _repo.uploadPostImage(state.imageFile!);
+        final uploaded = await _repo.uploadPostImage(state.imageFile!);
+        imageUrl = uploaded['url'];
+        imagePath = uploaded['path'];
       }
 
       if (state.isEdit && _initialPost != null) {
@@ -57,14 +61,29 @@ class PostEditorCubit extends Cubit<PostEditorState> {
             postId: _initialPost.id,
             content: text,
             imageUrl: imageUrl,
+            imagePath: imagePath,
+            removeImage: state.removeImage,
           ),
         );
       } else {
-        _postBloc.add(PostCreated(content: text, imageUrl: imageUrl));
+        _postBloc.add(
+          PostCreated(content: text, imageUrl: imageUrl, imagePath: imagePath),
+        );
       }
     } catch (e) {
       emit(state.copyWith(isSubmitting: false));
       rethrow;
     }
+  }
+
+  void removeImagePressed() {
+    emit(
+      state.copyWith(
+        imageFile: null,
+        existingImageUrl: null,
+        existingImagePath: null,
+        removeImage: true,
+      ),
+    );
   }
 }
